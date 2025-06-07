@@ -16,10 +16,10 @@ import { useRouter } from 'next/navigation'
 //     username: z.string().min(2).max(50),
 // }) //hata diya
 
-const authFormSchema = (type: FormType) => {
+const authFormSchema = (type: FormType) => {//sign-in, sign-up auth form ko call kar rha hai, on that basis.. checking which type of form is it
     return z.object({
         //using 'form' from shadcn
-        name: type === 'sign-up' ? z.string().min(3) : z.string().optional(),
+        name: type === 'sign-up' ? z.string().min(3) : z.string().optional(),//if its sign-in form, name is optional
         email: z.string().email(),
         password: z.string().min(3),
     })
