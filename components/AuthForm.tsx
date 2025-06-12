@@ -10,7 +10,10 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import FormField from './FormField'
 import { useRouter } from 'next/navigation'
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth'
+import {
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+} from 'firebase/auth'
 import { auth } from '@/firebase/client'
 import { signIn, signup } from '@/lib/actions/auth.action'
 
@@ -19,17 +22,24 @@ import { signIn, signup } from '@/lib/actions/auth.action'
 //     username: z.string().min(2).max(50),
 // }) //hata diya
 
-const authFormSchema = (type: FormType) => {//sign-in, sign-up auth form ko call kar rha hai, on that basis.. checking which type of form is it
+const authFormSchema = (type: FormType) => {
+    //sign-in, sign-up auth form ko call kar rha hai, on that basis.. checking which type of form is it
     return z.object({
         //using 'form' from shadcn
-        name: type === 'sign-up' ? z.string().min(3) : z.string().optional(),//if its sign-in form, name is optional
-        email: z.string().email(),
-        password: z.string().min(3),
+        name: type === 'sign-up' ? z.string().min(3) : z.string().optional(), //if its sign-in form, name is optional
+        email: z.string().email({ message: 'Invalid email address' }),
+        // password: z.string().min(3),
+        password: z
+            .string()
+            .min(6, { message: 'Password must be at least 6 characters long' })
+            .regex(/\d/, {
+                message: 'Password must contain at least one number',
+            }),
     })
 }
 
 const AuthForm = ({ type }: { type: FormType }) => {
-    const router = useRouter(); 
+    const router = useRouter()
     const formSchema = authFormSchema(type) //created custom authFormSchema
     // 1. Define your form.
     const form = useForm<z.infer<typeof formSchema>>({
@@ -46,43 +56,61 @@ const AuthForm = ({ type }: { type: FormType }) => {
         // Do something with the form values.
         // ✅ This will be type-safe and validated.
         try {
-            if(type === 'sign-up'){
-                const {name, email, password} = values;
-                const userCredentials = await createUserWithEmailAndPassword(auth, email, password) //function provided to use by firebase
-                // this registers a new user in firebase authentication not fireStore DB, using their email and password if the email is not already a user 
+            if (type === 'sign-up') {
+                const { name, email, password } = values
+                const userCredentials = await createUserWithEmailAndPassword(
+                    auth,
+                    email,
+                    password
+                ) //function provided to use by firebase
+                // this registers a new user in firebase authentication not fireStore DB, using their email and password if the email is not already a user
                 //in short -> It means authenticating a user
 
                 const result = await signup({
-                    uid : userCredentials.user.uid,
-                    name : name!,//letting typescript know that we'll have a name
+                    uid: userCredentials.user.uid,
+                    name: name!, //letting typescript know that we'll have a name
+                    email,
+                    password,
+                })
+                if (!result?.success) {
+                    console.log( "  NIKKI LAUDA  " + result?.message)
+                    if (result?.message === 'User already exists. Please sign in instead.') {
+                        toast.error('User already exists. Please sign in instead.') //hardcoded the error
+                        setTimeout(() => {
+                            router.push('/sign-in')
+                        }, 2000)
+                        //agar koi aur error aayi hai to error hi dikha do, otherwise "Account already exists mein" - signin pe redirect kar sakte
+                    }
+                    toast.error(result?.message)
+                    return
+                }
+                toast.success('Account created successfully. Please sign in.')
+                router.push('/sign-in')
+                // console.log('sign up', values)
+            } else {
+                const { email, password } = values
+                const userCredentials = await signInWithEmailAndPassword(
+                    auth,
                     email,
                     password
-                })
-                if(!result?.success){
-                    toast.error(result?.message);
-                    return;
-                }
-                toast.success("Account created successfully. Please sign in.");
-                router.push('/sign-in')
-                console.log('sign up', values);
-            }else{
-                const {email, password} = values;
-                const userCredentials = await signInWithEmailAndPassword(auth, email, password) //auth is an object from firebase/auth
+                ) //auth is an object from firebase/auth
                 //this'll give userCredentials which then we can use to generate a short lived authentication token
                 const idToken = await userCredentials.user.getIdToken()
-                if(!idToken){
-                    toast.error('signin failed');
-                    return;
+                if (!idToken) {
+                    toast.error('signin failed')
+                    return
                 }
-                await signIn({
-                    email, idToken
+                const result = await signIn({
+                    email,
+                    idToken,
                 })
-                toast.success("Sign in successfully.");
+                //account exist hi nhi karta to banao bhai
+                toast.success('Sign in successfully.')
                 router.push('/')
-                console.log('sign in', values);
+                console.log('sign in', values)
             }
         } catch (error) {
-            console.log(error);
+            console.log(error)
             //for making sonner work, you gotta import <Toaster /> in app's layout, so that you would be able to trigger toast
             toast.error(`There was an error : ${error}`) //sonner was installed for toast only
         }
@@ -103,9 +131,28 @@ const AuthForm = ({ type }: { type: FormType }) => {
                         onSubmit={form.handleSubmit(onSubmit)}
                         className="w-full space-y-6 mt-4 form"
                     >
-                        {!isSignin && <FormField control={form.control} name="name" label = "Name" placeholder='Your Name'/>}
-                        <FormField control={form.control} name="email" label = "Email" placeholder='Your email address' type="email" />
-                        <FormField control={form.control} name="password" label = "Password" placeholder='Enter your password' type="password" />
+                        {!isSignin && (
+                            <FormField
+                                control={form.control}
+                                name="name"
+                                label="Name"
+                                placeholder="Your Name"
+                            />
+                        )}
+                        <FormField
+                            control={form.control}
+                            name="email"
+                            label="Email"
+                            placeholder="Your email address"
+                            type="email"
+                        />
+                        <FormField
+                            control={form.control}
+                            name="password"
+                            label="Password"
+                            placeholder="Enter your password"
+                            type="password"
+                        />
                         <Button type="submit" className="btn">
                             {isSignin ? 'Sign in' : 'Create an Account'}
                         </Button>

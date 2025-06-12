@@ -1,4 +1,4 @@
-'user server';
+'use server';
 import { auth, db } from "@/firebase/admin";
 import { cookies } from "next/headers";
 
@@ -19,6 +19,10 @@ export async function signup(params : SignUpParams){//SignUpParams is in 'types'
         await db.collection('users').doc(uid).set({
             name, email//setting name : name, email : email as in object form
         })
+        return{
+            success : true,
+            message : 'Account created successfully. Please sign in.'
+        }
     }catch(e : any){// : any karne se => we dont have to any typescript validations
         console.error('Error creating a user', e);
         //we can even check for firebase errors
@@ -39,6 +43,7 @@ export async function signup(params : SignUpParams){//SignUpParams is in 'types'
 //sign in page -> you need to signIn with firebase sign-in with email and password, this will then generate a token 
 //which will send over server-side and setup cookie
 export async function signIn(params:SignInParams) {
+    console.log('even error pe signin chal gya')
     const {email, idToken} = params;
     try{
         const userRecord = await auth.getUserByEmail(email);//only admin sdk will have access to this user, checking if userRecord exists or not
@@ -71,3 +76,7 @@ export async function setSessionCookie(idToken : string){//SignUpParams is in 't
     })//setting cookie to cookie store
    
 }
+
+// export async function getCurrentuser() : Promise(){
+
+// }
