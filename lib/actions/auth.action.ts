@@ -77,6 +77,28 @@ export async function setSessionCookie(idToken : string){//SignUpParams is in 't
    
 }
 
-// export async function getCurrentuser() : Promise(){
+export async function getCurrentUser() : Promise<User | null> {//this funct will return a promise, that will be resolved in either a user or a null
+    //NOTE : 1) we are using the Next.js server-side cookies() utility (from next/headers)
+    // 2) Gives you access to the request cookies sent by the browser.
+    // 3) Automatically includes cookies like 'session' if they exist in the browser and are scoped to your domain/path.
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get('session')?.value;//getting specific session cookie
+    if(!sessionCookie) return null;//cookie doesn't exist
+    try{
+         const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);//verifying session cookie, 2nd parameter is for 'have we revoked the session or not'
+         const userRecord = await db.collection('users').doc(decodedClaims.uid).get()//who is this user which is currently loggedIn and getting him as well
+         if(!userRecord.exists) return null;
+         return{
+            ...userRecord.data(), 
+            id : userRecord.id,
+         } as User //returning the object as 'User' object
+    }catch(e){
+        console.log(e);
+        return null;//invalid session
+    }
+}
 
-// }
+export async function isAuthenticated(){
+    const user = await getCurrentUser();
+    return !!user;//basically 2 negation cancel each other, if user is null so return false...warna true karega
+}
