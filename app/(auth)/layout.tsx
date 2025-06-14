@@ -12,3 +12,10 @@ const AuthLayout = async ({children} : {children : ReactNode}) => {//component e
 }
 
 export default AuthLayout
+
+
+//NOTE : AI SDK, allows you to integrate any kind of LLM without depending on specific provider you use....the code will look the same for whichever provider you choose
+//we have chosen gemini...we need gemini to speak like a human so we'll use vapi for that(Best ai voice agents for developers)
+
+//Vapi web sdk - will allow you to integrate vapi with web app
+// it will provide you a simple api for interacting with real time call functionalites of vapi
