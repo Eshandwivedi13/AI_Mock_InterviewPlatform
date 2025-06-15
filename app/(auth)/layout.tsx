@@ -18,4 +18,4 @@ export default AuthLayout
 //we have chosen gemini...we need gemini to speak like a human so we'll use vapi for that(Best ai voice agents for developers)
 
 //Vapi web sdk - will allow you to integrate vapi with web app
-// it will provide you a simple api for interacting with real time call functionalites of vapi
+// it will provide you a simple api for interacting with real time call functionalites of vapi()
