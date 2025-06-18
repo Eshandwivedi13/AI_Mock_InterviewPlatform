@@ -100,7 +100,9 @@ const AuthForm = ({ type }: { type: FormType }) => {
                     toast.error('signin failed')
                     return
                 }
-                const result = await signIn({
+                
+                //const result = (etc...)
+                 await signIn({
                     email,
                     idToken,
                 })
