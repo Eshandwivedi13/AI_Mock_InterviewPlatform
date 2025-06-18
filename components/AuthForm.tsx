@@ -102,7 +102,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
                 }
                 
                 //const result = (etc...)
-                 await signIn({
+                const result = await signIn({
                     email,
                     idToken,
                 })
